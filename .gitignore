@@ -1,0 +1,12 @@
+node_modules/
+screenshots/
+reports/
+*.log
+.env
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+coverage/
+dist/
+build/
+temp.html

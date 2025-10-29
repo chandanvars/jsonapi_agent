@@ -1,0 +1,16 @@
+# Exclude generated files and folders
+screenshots/
+reports/
+node_modules/
+
+# Exclude development files
+.git/
+.gitignore
+.env
+*.log
+npm-debug.log*
+.DS_Store
+
+# Keep the folder structure but ignore contents
+!screenshots/.gitkeep
+!reports/.gitkeep

@@ -27,12 +27,11 @@ class APITestingAgent {
     async initBrowser() {
         if (!this.browser) {
             this.browser = await puppeteer.launch({
-                headless: false,
-                defaultViewport: null, // Use full screen
+                headless: 'new', // Run in headless mode (new headless engine)
+                defaultViewport: null,
                 args: [
                     '--no-sandbox', 
                     '--disable-setuid-sandbox',
-                    '--start-maximized',
                     '--disable-web-security',
                     '--force-device-scale-factor=1'
                 ]

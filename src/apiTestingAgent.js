@@ -33,11 +33,13 @@ class APITestingAgent {
                     '--no-sandbox', 
                     '--disable-setuid-sandbox',
                     '--disable-web-security',
-                    '--force-device-scale-factor=1'
+                    '--force-device-scale-factor=1',
+                    '--window-size=2560,1440' // Larger window for better rendering
                 ]
             });
             this.page = await this.browser.newPage();
-            await this.page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 1 });
+            // Increased viewport for better rendering of large content
+            await this.page.setViewport({ width: 2560, height: 1440, deviceScaleFactor: 1 });
         }
     }
 
@@ -209,7 +211,7 @@ class APITestingAgent {
                     border-radius: 8px;
                     overflow-x: auto;
                     white-space: pre-wrap;
-                    font-size: 14px;
+                    font-size: 16px;
                     line-height: 1.8;
                     min-height: 500px;
                     border: 2px solid #cbd5e0;
@@ -226,7 +228,7 @@ class APITestingAgent {
                     font-weight: 700 !important;
                     border: 3px solid #ff9800 !important;
                     box-shadow: 0 4px 8px rgba(255, 235, 59, 0.7) !important;
-                    font-size: 16px !important;
+                    font-size: 18px !important;
                     display: inline-block !important;
                     margin: 3px !important;
                 }
@@ -238,7 +240,7 @@ class APITestingAgent {
                     font-weight: 700 !important;
                     border: 3px solid #2e7d32 !important;
                     box-shadow: 0 4px 8px rgba(76, 175, 80, 0.7) !important;
-                    font-size: 16px !important;
+                    font-size: 18px !important;
                     display: inline-block !important;
                     margin: 3px !important;
                 }
@@ -332,8 +334,8 @@ class APITestingAgent {
                     // Calculate vertical distance from last element in current group
                     const verticalDistance = current.y - (lastInGroup.y + lastInGroup.height);
                     
-                    // Group if within 100px vertically
-                    if (verticalDistance <= 100) {
+                    // Group if within 200px vertically (increased for better grouping with larger fonts)
+                    if (verticalDistance <= 200) {
                         currentGroup.push(current);
                     } else {
                         groups.push(currentGroup);
@@ -375,15 +377,15 @@ class APITestingAgent {
                     // Get section bounds for reference
                     const sectionBox = await requestSection.boundingBox();
                     
-                    // Add generous padding and ensure we capture full line context
-                    const verticalPadding = 80;
-                    const horizontalPadding = 50;
+                    // Add MUCH MORE padding for better context and readability
+                    const verticalPadding = 150;
+                    const horizontalPadding = 100;
                     
                     const clip = {
-                        x: Math.max(sectionBox.x, minX - horizontalPadding),
-                        y: Math.max(sectionBox.y, minY - verticalPadding),
-                        width: Math.min(sectionBox.width, maxX - minX + horizontalPadding * 3),
-                        height: Math.min(sectionBox.height, maxY - minY + verticalPadding * 2)
+                        x: Math.max(sectionBox.x - 20, minX - horizontalPadding),
+                        y: Math.max(sectionBox.y - 20, minY - verticalPadding),
+                        width: Math.min(sectionBox.width + 40, maxX - minX + horizontalPadding * 4),
+                        height: Math.min(sectionBox.height + 40, maxY - minY + verticalPadding * 3)
                     };
                     
                     const screenshotPath = path.join(this.screenshotsDir, `${fileName}_request_group${g + 1}_${timestamp}.png`);
@@ -440,15 +442,15 @@ class APITestingAgent {
                     // Get section bounds for reference
                     const sectionBox = await responseSection.boundingBox();
                     
-                    // Add generous padding and ensure we capture full line context
-                    const verticalPadding = 80;
-                    const horizontalPadding = 50;
+                    // Add MUCH MORE padding for better context and readability
+                    const verticalPadding = 150;
+                    const horizontalPadding = 100;
                     
                     const clip = {
-                        x: Math.max(sectionBox.x, minX - horizontalPadding),
-                        y: Math.max(sectionBox.y, minY - verticalPadding),
-                        width: Math.min(sectionBox.width, maxX - minX + horizontalPadding * 3),
-                        height: Math.min(sectionBox.height, maxY - minY + verticalPadding * 2)
+                        x: Math.max(sectionBox.x - 20, minX - horizontalPadding),
+                        y: Math.max(sectionBox.y - 20, minY - verticalPadding),
+                        width: Math.min(sectionBox.width + 40, maxX - minX + horizontalPadding * 4),
+                        height: Math.min(sectionBox.height + 40, maxY - minY + verticalPadding * 3)
                     };
                     
                     const screenshotPath = path.join(this.screenshotsDir, `${fileName}_response_group${g + 1}_${timestamp}.png`);
@@ -565,26 +567,21 @@ class APITestingAgent {
                         };
                         currentRow += 2;
                         
-                        // Add image with proper sizing
-                        // For group/field screenshots, use moderate fixed size
-                        // For full page, scale down more
-                        let imageSize;
-                        if (filename.includes('_full_')) {
-                            imageSize = { width: 900, height: 700 };
-                        } else if (filename.includes('_group') || filename.includes('_field')) {
-                            // Use a reasonable size that shows detail without stretching
-                            imageSize = { width: 800, height: 300 };
-                        } else {
-                            imageSize = { width: 800, height: 400 };
-                        }
+                        // Use ACTUAL dimensions - no scaling or resizing
+                        // Read PNG dimensions directly from file header
+                        const imageBuffer = fs.readFileSync(screenshotPath);
+                        const width = imageBuffer.readUInt32BE(16);
+                        const height = imageBuffer.readUInt32BE(20);
                         
                         screenshotSheet.addImage(imageId, {
                             tl: { col: 0, row: currentRow },
-                            ext: imageSize
+                            ext: { width: width, height: height }
                         });
                         
-                        currentRow += filename.includes('_full_') ? 38 : 18;
-                        currentRow += 2; // Extra spacing between images
+                        // Calculate rows needed based on actual image height
+                        // Excel default row height is ~15 pixels, so divide height by 15 and add buffer
+                        const rowsNeeded = Math.ceil(height / 15) + 3; // +3 for spacing
+                        currentRow += rowsNeeded;
                     }
                 }
             }

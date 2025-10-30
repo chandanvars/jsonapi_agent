@@ -51,11 +51,23 @@ app.post('/api/test', async (req, res) => {
         await agent.cleanup();
         console.log(chalk.gray('🧹 Browser closed successfully'));
 
-        res.json({
+        // Prepare response with validation info
+        const response = {
             success: true,
             message: 'API test completed successfully',
             data: result
-        });
+        };
+
+        // Add validation warnings if any fields were corrected
+        if (result.validation && result.validation.issues.length > 0) {
+            response.warning = {
+                message: 'Some field names were invalid and have been corrected',
+                issues: result.validation.issues,
+                correctedFields: result.validation.correctedFields
+            };
+        }
+
+        res.json(response);
 
     } catch (error) {
         console.error(chalk.red('❌ API test failed:'), error.message);

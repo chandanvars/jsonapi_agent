@@ -4,6 +4,7 @@ const ExcelJS = require('exceljs');
 const fs = require('fs');
 const path = require('path');
 const chalk = require('chalk');
+const ValidationAgent = require('./validationAgent');
 
 class APITestingAgent {
     constructor() {
@@ -11,6 +12,7 @@ class APITestingAgent {
         this.page = null;
         this.screenshotsDir = path.join(__dirname, '..', 'screenshots');
         this.excelDir = path.join(__dirname, '..', 'reports');
+        this.validator = new ValidationAgent();
         
         // Ensure directories exist
         this.ensureDirectories();
@@ -48,16 +50,35 @@ class APITestingAgent {
             console.log(chalk.blue('🔧 Initializing browser...'));
             await this.initBrowser();
 
+            // Validate request fields before API call
+            const preValidation = await this.validator.validate(
+                { method, body, fieldsToHighlight },
+                null
+            );
+
             // Execute API call
             console.log(chalk.yellow('📡 Executing API call...'));
             const apiResponse = await this.makeAPICall(apiUrl, method, headers, body);
+
+            // Validate response fields after API call
+            const postValidation = await this.validator.validate(
+                { method, body, fieldsToHighlight },
+                apiResponse.data
+            );
+
+            // Use corrected fields if validation found issues
+            let correctedFields = fieldsToHighlight;
+            if (!postValidation.valid) {
+                console.log(chalk.yellow('🔧 Applying corrected field names...'));
+                correctedFields = postValidation.correctedFields;
+            }
 
             // Create HTML visualization
             console.log(chalk.yellow('🎨 Creating visual representation...'));
             const htmlContent = this.createHTMLVisualization(
                 { url: apiUrl, method, headers, body },
                 apiResponse,
-                fieldsToHighlight
+                correctedFields
             );
 
             // Take screenshots
@@ -85,7 +106,12 @@ class APITestingAgent {
                 },
                 screenshots: screenshots,
                 excelReport: excelPath,
-                fieldsHighlighted: fieldsToHighlight
+                fieldsHighlighted: correctedFields,
+                validation: {
+                    issues: postValidation.issues,
+                    correctedFields: correctedFields,
+                    warnings: postValidation.warnings
+                }
             };
 
         } catch (error) {

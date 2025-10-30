@@ -529,7 +529,7 @@
                 hideLoading();
                 
                 if (result.success) {
-                    showResults(result.data);
+                    showResults(result.data, result.warning);
                 } else {
                     showError(result.message);
                 }
@@ -539,10 +539,38 @@
             }
         }
         
-        function showResults(data) {
+        function showResults(data, warning) {
             const resultsDiv = document.getElementById('results');
+            
+            // Build validation warning section if exists
+            let validationWarningHtml = '';
+            if (warning && warning.issues && warning.issues.length > 0) {
+                validationWarningHtml = `
+                    <div style="padding: 15px; background: #fff3cd; border: 2px solid #ffc107; border-radius: 8px; margin: 15px 0;">
+                        <h4 style="color: #856404; margin-top: 0;">⚠️ Field Validation Warnings</h4>
+                        <p style="color: #856404; margin: 5px 0;"><strong>${warning.message}</strong></p>
+                        <ul style="color: #856404; margin: 10px 0; padding-left: 20px;">
+                            ${warning.issues.map(issue => `
+                                <li>
+                                    <strong>"${issue.field}"</strong> (${issue.type}): ${issue.issue}
+                                    ${issue.suggestions && issue.suggestions.length > 0 ? 
+                                        `<br><span style="color: #0066cc;">💡 Suggestions: ${issue.suggestions.join(', ')}</span>` 
+                                        : ''}
+                                </li>
+                            `).join('')}
+                        </ul>
+                        <p style="color: #856404; margin: 5px 0; font-weight: bold;">
+                            ✓ Test proceeded with valid fields only:<br>
+                            Request: ${warning.correctedFields.request.join(', ') || 'none'}<br>
+                            Response: ${warning.correctedFields.response.join(', ') || 'none'}
+                        </p>
+                    </div>
+                `;
+            }
+            
             resultsDiv.innerHTML = `
                 <h3>🎉 Test Completed Successfully!</h3>
+                ${validationWarningHtml}
                 <div style="margin: 20px 0;">
                     <strong>API Status:</strong> ${data.response.status} ${data.response.statusText}<br>
                     <strong>Screenshots Generated:</strong> ${Object.keys(data.screenshots).length} files<br>
@@ -559,6 +587,30 @@
                 </div>
             `;
             resultsDiv.style.display = 'block';
+            
+            // Clear fields except URL and headers after successful execution
+            clearFieldsAfterSuccess();
+        }
+        
+        function clearFieldsAfterSuccess() {
+            // Keep: apiUrl, headers
+            // Clear: method (reset to GET), body, fileName, requestFields, responseFields
+            document.getElementById('method').value = 'GET';
+            document.getElementById('body').value = '';
+            document.getElementById('fileName').value = '';
+            document.getElementById('requestFields').value = '';
+            document.getElementById('responseFields').value = '';
+            
+            // Clear field previews
+            document.getElementById('selectedRequestFields').innerHTML = '';
+            document.getElementById('selectedResponseFields').innerHTML = '';
+            
+            // Hide field selection section
+            document.getElementById('fieldSelection').style.display = 'none';
+            
+            // Reset selected fields arrays
+            selectedRequestFields = [];
+            selectedResponseFields = [];
         }
         
         function showLoading() {

@@ -16,15 +16,48 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
+            margin: 0;
         }
         
         .container {
-            max-width: 800px;
+            max-width: 100%;
+            width: 98%;
             margin: 0 auto;
             background: white;
             border-radius: 15px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 30px;
+        }
+        
+        .left-panel {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 10px;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        
+        .right-panel {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
         }
         
         .header {
@@ -45,15 +78,16 @@
         }
         
         .form-section {
-            padding: 30px;
+            padding: 0;
         }
         
         .step {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             padding: 20px;
-            border: 2px solid #f0f0f0;
+            border: 2px solid #e0e7ff;
             border-radius: 10px;
             transition: all 0.3s ease;
+            background: white;
         }
         
         .step:hover {
@@ -61,9 +95,13 @@
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
         }
         
+        .left-panel .step {
+            background: white;
+        }
+        
         .step-title {
             color: #667eea;
-            font-size: 1.3em;
+            font-size: 1.2em;
             font-weight: bold;
             margin-bottom: 15px;
             display: flex;
@@ -73,39 +111,55 @@
         .step-number {
             background: #667eea;
             color: white;
-            width: 30px;
-            height: 30px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 15px;
-            font-size: 0.9em;
+            margin-right: 12px;
+            font-size: 0.85em;
+            flex-shrink: 0;
+        }
+        
+        .panel-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
         }
         
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         
         label {
             display: block;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             font-weight: 600;
             color: #333;
+            font-size: 0.95em;
         }
         
         input, select, textarea {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
-            font-size: 1em;
+            font-size: 0.95em;
             transition: border-color 0.3s ease;
         }
         
         input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: #667eea;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 80px;
         }
         
         code {
@@ -118,10 +172,10 @@
         
         .field-selection {
             display: none;
-            background: #f8f9ff;
-            padding: 20px;
+            background: white;
+            padding: 0;
             border-radius: 10px;
-            margin-top: 20px;
+            margin-top: 0;
         }
         
         .field-group {
@@ -202,15 +256,16 @@
         .button {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 15px 30px;
+            padding: 12px 24px;
             border: none;
             border-radius: 25px;
-            font-size: 1.1em;
+            font-size: 1em;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-right: 15px;
+            margin-right: 10px;
             margin-bottom: 10px;
+            width: 100%;
         }
         
         .button:hover {
@@ -224,13 +279,27 @@
             transform: none;
         }
         
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .button-group .button {
+            flex: 1;
+            margin: 0;
+            min-width: 200px;
+        }
+        
         .results {
             display: none;
-            margin-top: 30px;
+            margin-top: 20px;
             padding: 20px;
             background: #f0f8ff;
             border-radius: 10px;
             border: 2px solid #667eea;
+            max-height: 400px;
+            overflow-y: auto;
         }
         
         .loading {
@@ -280,7 +349,95 @@
             <p>Test your APIs with intelligent field highlighting and comprehensive reporting</p>
         </div>
         
-        <div class="form-section">
+        <div class="main-content">
+            <!-- LEFT PANEL: TestRail & API Configuration -->
+            <div class="left-panel">
+                <h2 class="panel-title">🔧 Configuration</h2>
+                
+                <!-- Step 0A: TestRail Connection -->
+                <div class="step">
+                    <div class="step-title">
+                        <span class="step-number">0</span>
+                        TestRail Connection (Optional)
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="testrailUrl">TestRail URL</label>
+                        <input type="url" id="testrailUrl" placeholder="https://yourcompany.testrail.io">
+                        <p style="color: #666; font-size: 0.85em; margin-top: 5px;">
+                            💡 Base URL only (API path added automatically)
+                        </p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="testrailUsername">Username / Email</label>
+                        <input type="text" id="testrailUsername" placeholder="your-email@company.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="testrailPassword">API Key / Password</label>
+                        <input type="password" id="testrailPassword" placeholder="Enter API key or password">
+                        <p style="color: #666; font-size: 0.85em; margin-top: 5px;">
+                            🔑 Use API Key from TestRail → My Settings → API Keys
+                        </p>
+                    </div>
+                    
+                    <button type="button" class="button" onclick="connectToTestRail()">
+                        🔗 Connect to TestRail
+                    </button>
+                    
+                    <div id="testrailStatus" style="margin-top: 15px;"></div>
+                </div>
+                
+                <!-- Step 0B: Test Selection (Hidden until connected) -->
+                <div class="step" id="testSelectionSection" style="display: none;">
+                    <div class="step-title">
+                        <span class="step-number">📋</span>
+                        Select Test Run
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="testrailProjectName">Project Name</label>
+                        <input type="text" id="testrailProjectName" placeholder="My Project">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="testrailSuiteName">Suite Name (Optional)</label>
+                        <input type="text" id="testrailSuiteName" placeholder="Master Suite">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="testrailRunId">Test Run ID</label>
+                        <input type="number" id="testrailRunId" placeholder="123">
+                        <p style="color: #666; font-size: 0.85em; margin-top: 5px;">
+                            📋 From URL: /runs/view/<strong>123</strong>
+                        </p>
+                    </div>
+                    
+                    <button type="button" class="button" onclick="loadTestCases()">
+                        � Load Test Cases
+                    </button>
+                    
+                    <!-- Test Cases List (Hidden initially) -->
+                    <div id="testrailTestCases" style="display: none; margin-top: 20px; background: #f8f9ff; padding: 15px; border-radius: 10px;">
+                        <h4 style="color: #667eea; margin-bottom: 15px;">✅ Available Test Cases</h4>
+                        <div id="testCasesList" style="max-height: 300px; overflow-y: auto;"></div>
+                        
+                        <!-- Upload to TestRail Checkbox -->
+                        <div style="margin-top: 20px; padding: 15px; background: white; border-radius: 8px; border: 2px solid #e0e7ff;">
+                            <label style="display: flex; align-items: center; cursor: pointer; user-select: none;">
+                                <input type="checkbox" id="uploadToTestRail" style="width: auto; margin-right: 10px; cursor: pointer; transform: scale(1.3);" checked>
+                                <span style="font-size: 1.05em; font-weight: 600; color: #333;">
+                                    📤 Upload test results and screenshots to TestRail
+                                </span>
+                            </label>
+                            <p style="color: #666; font-size: 0.9em; margin-top: 8px; margin-left: 30px;">
+                                When checked, API test results and screenshots will be automatically uploaded to the selected test cases in TestRail
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            
             <!-- Step 1: API Configuration -->
             <div class="step">
                 <div class="step-title">
@@ -321,9 +478,14 @@
                     🎯 Configure Field Highlighting
                 </button>
             </div>
+            </div>
             
-            <!-- Step 2: Field Selection (Hidden initially) -->
-            <div class="step field-selection" id="fieldSelection">
+            <!-- RIGHT PANEL: Field Selection & Results -->
+            <div class="right-panel">
+                <h2 class="panel-title">🎯 Field Highlighting & Execution</h2>
+                
+                <!-- Step 2: Field Selection (Hidden initially) -->
+                <div class="step field-selection" id="fieldSelection">
                 <div class="step-title">
                     <span class="step-number">2</span>
                     Select Fields to Highlight
@@ -394,12 +556,16 @@
             
             <!-- Results -->
             <div class="results" id="results"></div>
+            </div>
         </div>
     </div>
     
     <script>
         let selectedRequestFields = [];
         let selectedResponseFields = [];
+        let testrailConnected = false;
+        let selectedTestCases = [];
+        let currentRunId = null;
         
         // Show/hide body field based on method
         document.getElementById('method').addEventListener('change', function() {
@@ -546,6 +712,23 @@
                 return;
             }
             
+            // Check if user wants to upload to TestRail
+            const uploadToTestRail = document.getElementById('uploadToTestRail') ? 
+                                      document.getElementById('uploadToTestRail').checked : false;
+            
+            // Validate TestRail integration - run ID must be set if test cases are selected and upload is enabled
+            if (uploadToTestRail && selectedTestCases.length > 0 && !currentRunId) {
+                showError('Please load test cases from TestRail first before running the test');
+                return;
+            }
+            
+            console.log('🔍 Executing test with TestRail:', {
+                enabled: testrailConnected && uploadToTestRail,
+                uploadEnabled: uploadToTestRail,
+                runId: currentRunId,
+                selectedCount: selectedTestCases.length
+            });
+            
             showLoading();
             
             try {
@@ -565,7 +748,12 @@
                         },
                         excelFileName: fileName,
                         appendMode: appendMode,
-                        testCaseName: testCaseName.trim()
+                        testCaseName: testCaseName.trim(),
+                        testrail: {
+                            enabled: testrailConnected && uploadToTestRail,
+                            selectedTestCases: uploadToTestRail ? selectedTestCases : [],
+                            runId: currentRunId
+                        }
                     })
                 });
                 
@@ -612,9 +800,37 @@
                 `;
             }
             
+            // Build TestRail results section if exists
+            let testrailResultsHtml = '';
+            if (data.testrailResults && data.testrailResults.length > 0) {
+                const successCount = data.testrailResults.filter(r => r.success !== false).length;
+                const failCount = data.testrailResults.length - successCount;
+                
+                testrailResultsHtml = `
+                    <div style="padding: 15px; background: #e8f5e9; border: 2px solid #4caf50; border-radius: 8px; margin: 15px 0;">
+                        <h4 style="color: #2e7d32; margin-top: 0;">🔗 TestRail Upload Results</h4>
+                        <p style="color: #2e7d32; margin: 5px 0;">
+                            <strong>✅ Successful: ${successCount} | ❌ Failed: ${failCount}</strong>
+                        </p>
+                        <ul style="color: #2e7d32; margin: 10px 0; padding-left: 20px;">
+                            ${data.testrailResults.map(result => `
+                                <li>
+                                    ${result.success !== false ? '✅' : '❌'} 
+                                    <strong>Test ${result.testId}:</strong> ${result.testTitle}
+                                    ${result.success !== false ? 
+                                        `<br>Screenshots uploaded: ${result.screenshotsUploaded}` : 
+                                        `<br><span style="color: #d32f2f;">Error: ${result.error}</span>`}
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+            
             resultsDiv.innerHTML = `
                 <h3>🎉 Test Completed Successfully!</h3>
                 ${validationWarningHtml}
+                ${testrailResultsHtml}
                 <div style="margin: 20px 0;">
                     <strong>API Status:</strong> ${data.response.status} ${data.response.statusText}<br>
                     <strong>Screenshots Generated:</strong> ${Object.keys(data.screenshots).length} files<br>
@@ -714,6 +930,211 @@
             successDiv.textContent = '✅ ' + message;
             document.querySelector('.form-section').appendChild(successDiv);
             setTimeout(() => successDiv.remove(), 5000);
+        }
+        
+        // TestRail Integration Functions
+        async function connectToTestRail() {
+            clearMessages();
+            
+            const url = document.getElementById('testrailUrl').value.trim();
+            const username = document.getElementById('testrailUsername').value.trim();
+            const password = document.getElementById('testrailPassword').value.trim();
+            
+            if (!url || !username || !password) {
+                showError('Please fill in all TestRail connection fields (URL, Username, Password)');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                // Connect to TestRail
+                const connectResponse = await fetch('/api/testrail/connect', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        url,
+                        username,
+                        password
+                    })
+                });
+                
+                const connectResult = await connectResponse.json();
+                
+                hideLoading();
+                
+                if (!connectResult.success) {
+                    showError(connectResult.message);
+                    document.getElementById('testrailStatus').innerHTML = `
+                        <div class="error">
+                            ❌ Connection Failed<br>
+                            ${connectResult.message}
+                        </div>
+                    `;
+                    return;
+                }
+                
+                testrailConnected = true;
+                
+                // Update status display
+                document.getElementById('testrailStatus').innerHTML = `
+                    <div class="success">
+                        ✅ Connected to TestRail<br>
+                        ${connectResult.message}
+                    </div>
+                `;
+                
+                // Show test selection section
+                document.getElementById('testSelectionSection').style.display = 'block';
+                
+                showSuccess(`Connected to TestRail successfully!`);
+                
+            } catch (error) {
+                hideLoading();
+                showError('Failed to connect to TestRail: ' + error.message);
+                document.getElementById('testrailStatus').innerHTML = `
+                    <div class="error">
+                        ❌ Connection Failed<br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        async function loadTestCases() {
+            clearMessages();
+            
+            const projectName = document.getElementById('testrailProjectName').value.trim();
+            const suiteName = document.getElementById('testrailSuiteName').value.trim();
+            const runId = document.getElementById('testrailRunId').value.trim();
+            
+            if (!projectName || !runId) {
+                showError('Please enter Project Name and Test Run ID');
+                return;
+            }
+            
+            if (!testrailConnected) {
+                showError('Please connect to TestRail first');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                // Get test cases from run
+                const testCasesResponse = await fetch('/api/testrail/test-cases', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        projectName,
+                        suiteName: suiteName || null,
+                        runId: parseInt(runId)
+                    })
+                });
+                
+                const testCasesResult = await testCasesResponse.json();
+                
+                hideLoading();
+                
+                if (!testCasesResult.success) {
+                    showError(testCasesResult.message);
+                    return;
+                }
+                
+                // Store the run ID for later use
+                currentRunId = testCasesResult.runDetails.id;
+                console.log('🔍 Stored run ID:', currentRunId);
+                
+                // Display run details separately BEFORE test cases
+                displayRunDetails(testCasesResult.runDetails);
+                
+                displayTestCases(testCasesResult.testCases, testCasesResult.runDetails);
+                showSuccess(`Loaded ${testCasesResult.testCases.length} test case(s) from ${testCasesResult.runDetails.name}`);
+                
+            } catch (error) {
+                hideLoading();
+                showError('Failed to load test cases: ' + error.message);
+            }
+        }
+        
+        function displayRunDetails(runDetails) {
+            const runDetailsSection = document.getElementById('testSelectionSection');
+            
+            if (!runDetails) return;
+            
+            // Check if run details display already exists
+            let runDetailsDiv = document.getElementById('testrailRunDetailsDisplay');
+            
+            if (!runDetailsDiv) {
+                // Create the run details display div if it doesn't exist
+                runDetailsDiv = document.createElement('div');
+                runDetailsDiv.id = 'testrailRunDetailsDisplay';
+                runDetailsDiv.style.cssText = 'margin-top: 20px; padding: 15px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; color: white;';
+                
+                // Insert before the test cases section
+                const testCasesDiv = document.getElementById('testrailTestCases');
+                runDetailsSection.insertBefore(runDetailsDiv, testCasesDiv);
+            }
+            
+            // Update content
+            runDetailsDiv.innerHTML = `
+                <h4 style="margin: 0 0 10px 0; color: white;">📋 Test Run Details</h4>
+                <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px; font-size: 0.95em;">
+                    <strong>Project:</strong> <span>${runDetails.projectName} (ID: ${runDetails.projectId})</span>
+                    ${runDetails.suiteName ? `<strong>Suite:</strong> <span>${runDetails.suiteName} (ID: ${runDetails.suiteId})</span>` : ''}
+                    <strong>Test Run:</strong> <span>${runDetails.name} (ID: ${runDetails.id})</span>
+                </div>
+            `;
+            
+            runDetailsDiv.style.display = 'block';
+        }
+        
+        function displayTestCases(testCases, runDetails) {
+            const testCasesDiv = document.getElementById('testrailTestCases');
+            const testCasesList = document.getElementById('testCasesList');
+            
+            if (testCases.length === 0) {
+                testCasesList.innerHTML = '<p style="color: #666;">No test cases found in this run.</p>';
+                testCasesDiv.style.display = 'block';
+                return;
+            }
+            
+            // Display test cases list (run details displayed separately above)
+            testCasesList.innerHTML = testCases.map((test, index) => `
+                <div style="padding: 12px; margin-bottom: 8px; background: white; border-radius: 8px; border: 2px solid #e0e0e0; display: flex; align-items: center;">
+                    <input type="checkbox" 
+                           id="test_${test.id}" 
+                           value="${test.id}" 
+                           data-case-id="${test.caseId}"
+                           onchange="toggleTestCase(${test.id}, ${test.caseId}, '${test.title.replace(/'/g, "\\'")}', this.checked)"
+                           style="width: 20px; height: 20px; margin-right: 15px; cursor: pointer;">
+                    <label for="test_${test.id}" style="cursor: pointer; flex: 1; margin: 0;">
+                        <strong>Case ${test.caseId} (Test ${test.id}):</strong> ${test.title}
+                    </label>
+                </div>
+            `).join('');
+            
+            testCasesDiv.style.display = 'block';
+        }
+        
+        function toggleTestCase(testId, caseId, testTitle, isChecked) {
+            if (isChecked) {
+                if (!selectedTestCases.find(t => t.id === testId)) {
+                    selectedTestCases.push({ 
+                        id: testId, 
+                        caseId: caseId,
+                        title: testTitle 
+                    });
+                }
+            } else {
+                selectedTestCases = selectedTestCases.filter(t => t.id !== testId);
+            }
+            
+            console.log('Selected test cases:', selectedTestCases);
         }
     </script>
 </body>

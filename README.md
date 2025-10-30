@@ -14,6 +14,27 @@ A powerful Node.js application that executes API calls, highlights specified fie
 - 📑 **Multi-Test Support**: Append multiple test cases to the same Excel file with named tabs
 - ⚡ **Auto-Clear Messages**: Success messages automatically clear after 10 seconds
 - 🎯 **Side-by-Side Layout**: Request and response screenshots displayed adjacently in Excel
+- 🔗 **TestRail Integration**: Connect to TestRail and automatically upload screenshots to test results
+
+## 🔗 NEW: TestRail Integration
+
+Seamlessly integrate with TestRail to update test results with screenshots:
+
+**How it works:**
+1. **Connect**: Enter your TestRail URL, credentials, project name, and test run ID
+2. **Load Tests**: Automatically fetch all test cases from the specified test run
+3. **Select Tests**: Choose which test cases to update using checkboxes
+4. **Execute**: Run your API test as normal
+5. **Auto-Upload**: Screenshots are automatically uploaded to selected test cases with detailed comments
+
+**Features:**
+- ✅ Automatic status updates (Passed/Failed based on HTTP response)
+- 📎 All screenshots attached to test results
+- 📝 Detailed comments with API endpoint, method, status, and timestamp
+- 🎯 Support for multiple test case selection
+- 🔒 Secure connection using TestRail API tokens
+
+📖 **[Complete TestRail Integration Guide →](TESTRAIL_INTEGRATION.md)**
 
 ## 📋 Prerequisites
 

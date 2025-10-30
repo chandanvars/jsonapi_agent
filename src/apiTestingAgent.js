@@ -34,7 +34,7 @@ class APITestingAgent {
                     '--disable-setuid-sandbox',
                     '--disable-web-security',
                     '--force-device-scale-factor=1',
-                    '--window-size=2560,1440' // Larger window for better rendering
+                    '--window-size=1920,1200' // Larger window for better rendering
                 ]
             });
             this.page = await this.browser.newPage();

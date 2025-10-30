@@ -45,7 +45,7 @@ class APITestingAgent {
         }
     }
 
-    async executeAPITest({ apiUrl, method, headers, body, fieldsToHighlight, excelFileName }) {
+    async executeAPITest({ apiUrl, method, headers, body, fieldsToHighlight, excelFileName, appendMode = false, testCaseName = '' }) {
         try {
             console.log(chalk.blue('🔧 Initializing browser...'));
             await this.initBrowser();
@@ -91,7 +91,9 @@ class APITestingAgent {
                 { url: apiUrl, method, headers, body },
                 apiResponse,
                 screenshots,
-                excelFileName
+                excelFileName,
+                appendMode,
+                testCaseName
             );
 
             console.log(chalk.green('✅ API test completed successfully!'));
@@ -514,12 +516,54 @@ class APITestingAgent {
         }
     }
 
-    async generateExcelReport(request, response, screenshots, fileName) {
+    async generateExcelReport(request, response, screenshots, fileName, appendMode = false, testCaseName = '') {
         try {
-            const workbook = new ExcelJS.Workbook();
+            let workbook;
+            let excelPath;
+            
+            // Determine the Excel file path
+            if (appendMode) {
+                // Use the same file name without timestamp
+                excelPath = path.join(this.excelDir, `${fileName}.xlsx`);
+                
+                // Check if file exists and load it
+                if (fs.existsSync(excelPath)) {
+                    console.log(chalk.cyan(`📂 Loading existing Excel file: ${excelPath}`));
+                    workbook = new ExcelJS.Workbook();
+                    await workbook.xlsx.readFile(excelPath);
+                } else {
+                    console.log(chalk.cyan(`📂 Creating new Excel file: ${excelPath}`));
+                    workbook = new ExcelJS.Workbook();
+                }
+            } else {
+                // Create new workbook with timestamp
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                excelPath = path.join(this.excelDir, `${fileName}_${timestamp}.xlsx`);
+                workbook = new ExcelJS.Workbook();
+            }
+            
+            // Determine worksheet name
+            let worksheetName;
+            if (appendMode && testCaseName) {
+                // Use test case name for tab
+                worksheetName = testCaseName.substring(0, 31); // Excel limit is 31 chars
+                
+                // Check if worksheet already exists, add counter if it does
+                let counter = 1;
+                let finalName = worksheetName;
+                while (workbook.getWorksheet(finalName)) {
+                    finalName = `${worksheetName.substring(0, 28)}_${counter}`;
+                    counter++;
+                }
+                worksheetName = finalName;
+            } else {
+                worksheetName = 'API Test Details';
+            }
+            
+            console.log(chalk.cyan(`📄 Creating worksheet: ${worksheetName}`));
             
             // API Details Worksheet
-            const apiSheet = workbook.addWorksheet('API Test Details');
+            const apiSheet = workbook.addWorksheet(worksheetName);
             
             // Set column widths
             apiSheet.columns = [
@@ -545,76 +589,135 @@ class APITestingAgent {
                 fgColor: { argb: 'FFE6F3FF' }
             };
 
-            // Screenshots Worksheet
-            const screenshotSheet = workbook.addWorksheet('Screenshots');
-            screenshotSheet.getColumn(1).width = 120;
+            // Add some space before screenshots
+            let apiCurrentRow = apiSheet.rowCount + 3;
             
-            // Add images to Excel
-            let currentRow = 1;
+            // Add Screenshots section header in API sheet
+            apiSheet.mergeCells(`A${apiCurrentRow}:B${apiCurrentRow}`);
+            apiSheet.getCell(`A${apiCurrentRow}`).value = '📸 API REQUEST & RESPONSE SCREENSHOTS';
+            apiSheet.getCell(`A${apiCurrentRow}`).font = { bold: true, size: 16, color: { argb: 'FF0066CC' } };
+            apiSheet.getCell(`A${apiCurrentRow}`).fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFE6F3FF' }
+            };
+            apiSheet.getCell(`A${apiCurrentRow}`).alignment = { horizontal: 'center' };
+            apiCurrentRow += 2;
             
-            // screenshots is now an array of file paths
+            // Set column widths for side-by-side layout
+            apiSheet.getColumn(1).width = 100;
+            apiSheet.getColumn(2).width = 100;
+            
+            // Add screenshots to API sheet - organize by request/response pairs
             if (screenshots && screenshots.length > 0) {
-                for (let i = 0; i < screenshots.length; i++) {
-                    const screenshotPath = screenshots[i];
+                // Separate screenshots by type
+                const fullPageScreenshots = [];
+                const requestScreenshots = [];
+                const responseScreenshots = [];
+                
+                for (const screenshotPath of screenshots) {
+                    const filename = path.basename(screenshotPath);
+                    if (filename.includes('_full_')) {
+                        fullPageScreenshots.push(screenshotPath);
+                    } else if (filename.includes('_request_')) {
+                        requestScreenshots.push(screenshotPath);
+                    } else if (filename.includes('_response_')) {
+                        responseScreenshots.push(screenshotPath);
+                    }
+                }
+                
+                // Add request and response screenshots side-by-side
+                const maxPairs = Math.max(requestScreenshots.length, responseScreenshots.length);
+                
+                if (maxPairs > 0) {
+                    // Add headers for request and response columns
+                    apiSheet.getCell(`A${apiCurrentRow}`).value = '📤 REQUEST DETAILS';
+                    apiSheet.getCell(`A${apiCurrentRow}`).font = { bold: true, size: 14, color: { argb: 'FFFF6B00' } };
+                    apiSheet.getCell(`A${apiCurrentRow}`).fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFFFF3CD' }
+                    };
+                    apiSheet.getCell(`A${apiCurrentRow}`).alignment = { horizontal: 'center', vertical: 'middle' };
                     
-                    if (fs.existsSync(screenshotPath)) {
-                        const imageId = workbook.addImage({
-                            filename: screenshotPath,
-                            extension: 'png',
-                        });
+                    apiSheet.getCell(`B${apiCurrentRow}`).value = '📥 RESPONSE DETAILS';
+                    apiSheet.getCell(`B${apiCurrentRow}`).font = { bold: true, size: 14, color: { argb: 'FF2E7D32' } };
+                    apiSheet.getCell(`B${apiCurrentRow}`).fill = {
+                        type: 'pattern',
+                        pattern: 'solid',
+                        fgColor: { argb: 'FFE8F5E9' }
+                    };
+                    apiSheet.getCell(`B${apiCurrentRow}`).alignment = { horizontal: 'center', vertical: 'middle' };
+                    
+                    apiCurrentRow += 2;
+                    
+                    // Process pairs
+                    for (let i = 0; i < maxPairs; i++) {
+                        let maxRowsNeeded = 0;
                         
-                        // Extract label from filename
-                        const filename = path.basename(screenshotPath);
-                        let label = 'Screenshot';
-                        
-                        if (filename.includes('_full_')) {
-                            label = 'Full Page Screenshot';
-                        } else if (filename.includes('_request_group')) {
-                            const groupNum = filename.match(/group(\d+)/)?.[1] || (i + 1);
-                            label = `Request Fields - Group ${groupNum}`;
-                        } else if (filename.includes('_response_group')) {
-                            const groupNum = filename.match(/group(\d+)/)?.[1] || (i + 1);
-                            label = `Response Fields - Group ${groupNum}`;
-                        } else if (filename.includes('_request_field')) {
-                            const fieldNum = filename.match(/field(\d+)/)?.[1] || (i + 1);
-                            label = `Request Field ${fieldNum}`;
-                        } else if (filename.includes('_response_field')) {
-                            const fieldNum = filename.match(/field(\d+)/)?.[1] || (i + 1);
-                            label = `Response Field ${fieldNum}`;
+                        // Add request screenshot (left column)
+                        if (i < requestScreenshots.length && fs.existsSync(requestScreenshots[i])) {
+                            const screenshotPath = requestScreenshots[i];
+                            const filename = path.basename(screenshotPath);
+                            const imageId = workbook.addImage({
+                                filename: screenshotPath,
+                                extension: 'png',
+                            });
+                            
+                            // Get image dimensions
+                            const imageBuffer = fs.readFileSync(screenshotPath);
+                            const width = imageBuffer.readUInt32BE(16);
+                            const height = imageBuffer.readUInt32BE(20);
+                            
+                            // Scale to fit better (40% of original)
+                            const scaledWidth = width * 0.4;
+                            const scaledHeight = height * 0.4;
+                            
+                            // Add image
+                            apiSheet.addImage(imageId, {
+                                tl: { col: 0, row: apiCurrentRow - 1 },
+                                ext: { width: scaledWidth, height: scaledHeight }
+                            });
+                            
+                            const rowsNeeded = Math.ceil(scaledHeight / 15);
+                            maxRowsNeeded = Math.max(maxRowsNeeded, rowsNeeded);
                         }
                         
-                        // Add label
-                        screenshotSheet.getCell(`A${currentRow}`).value = label;
-                        screenshotSheet.getCell(`A${currentRow}`).font = { bold: true, size: 14, color: { argb: 'FF0066CC' } };
-                        screenshotSheet.getCell(`A${currentRow}`).fill = {
-                            type: 'pattern',
-                            pattern: 'solid',
-                            fgColor: { argb: 'FFE6F3FF' }
-                        };
-                        currentRow += 2;
+                        // Add response screenshot (right column)
+                        if (i < responseScreenshots.length && fs.existsSync(responseScreenshots[i])) {
+                            const screenshotPath = responseScreenshots[i];
+                            const filename = path.basename(screenshotPath);
+                            const imageId = workbook.addImage({
+                                filename: screenshotPath,
+                                extension: 'png',
+                            });
+                            
+                            // Get image dimensions
+                            const imageBuffer = fs.readFileSync(screenshotPath);
+                            const width = imageBuffer.readUInt32BE(16);
+                            const height = imageBuffer.readUInt32BE(20);
+                            
+                            // Scale to fit better (40% of original)
+                            const scaledWidth = width * 0.4;
+                            const scaledHeight = height * 0.4;
+                            
+                            // Add image
+                            apiSheet.addImage(imageId, {
+                                tl: { col: 1, row: apiCurrentRow - 1 },
+                                ext: { width: scaledWidth, height: scaledHeight }
+                            });
+                            
+                            const rowsNeeded = Math.ceil(scaledHeight / 15);
+                            maxRowsNeeded = Math.max(maxRowsNeeded, rowsNeeded);
+                        }
                         
-                        // Use ACTUAL dimensions - no scaling or resizing
-                        // Read PNG dimensions directly from file header
-                        const imageBuffer = fs.readFileSync(screenshotPath);
-                        const width = imageBuffer.readUInt32BE(16);
-                        const height = imageBuffer.readUInt32BE(20);
-                        
-                        screenshotSheet.addImage(imageId, {
-                            tl: { col: 0, row: currentRow },
-                            ext: { width: width, height: height }
-                        });
-                        
-                        // Calculate rows needed based on actual image height
-                        // Excel default row height is ~15 pixels, so divide height by 15 and add buffer
-                        const rowsNeeded = Math.ceil(height / 15) + 3; // +3 for spacing
-                        currentRow += rowsNeeded;
+                        // Move to next pair - use the larger height
+                        apiCurrentRow += maxRowsNeeded + 2;
                     }
                 }
             }
 
             // Save Excel file
-            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const excelPath = path.join(this.excelDir, `${fileName}_${timestamp}.xlsx`);
             await workbook.xlsx.writeFile(excelPath);
 
             console.log(chalk.green(`📊 Excel report saved: ${excelPath}`));

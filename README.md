@@ -7,10 +7,13 @@ A powerful Node.js application that executes API calls, highlights specified fie
 - 🚀 **API Execution**: Make HTTP requests to any REST API (GET, POST, PUT, DELETE, PATCH)
 - 🎯 **Smart Field Highlighting**: Highlight specific fields in JSON request/response data
 - 📸 **Intelligent Screenshots**: Automatically captures focused screenshots of highlighted fields with context
-- 📊 **Excel Reports**: Generate comprehensive Excel files with embedded high-quality screenshots
+- 📊 **Excel Reports**: Generate comprehensive Excel files with side-by-side request/response screenshots
 - 🌐 **Web Interface**: Beautiful, user-friendly web UI with smart field suggestions
 - 🎨 **Visual HTML**: Creates clean HTML visualizations with proper formatting
 - 🔄 **Auto Cleanup**: Automatically closes browser after test completion
+- 📑 **Multi-Test Support**: Append multiple test cases to the same Excel file with named tabs
+- ⚡ **Auto-Clear Messages**: Success messages automatically clear after 10 seconds
+- 🎯 **Side-by-Side Layout**: Request and response screenshots displayed adjacently in Excel
 
 ## 📋 Prerequisites
 
@@ -65,13 +68,21 @@ That's it! The tool is now ready to use. 🎉
    - Click "Configure Field Highlighting"
    - **Request Fields**: Auto-suggested (e.g., `url, method, id, name`)
    - **Response Fields**: Enter manually based on your API (e.g., `userId, id, title`)
+   - **Report File Name**: Enter a base name for your report (default: `interactive-api-test`)
 
-3. **Execute Test**
+3. **Append Mode (Optional)**
+   - Check "Append to existing Excel file" to add multiple test cases to one file
+   - When checked, enter a **Test Case Name** (e.g., `Login_Test`, `Get_Users`)
+   - Each test case will be added as a separate tab in the same Excel file
+   - When unchecked, a new timestamped Excel file is created for each test
+
+4. **Execute Test**
    - Click "Execute Test with Highlighting"
    - Browser opens automatically
    - Screenshots captured with highlighted fields
-   - Excel report generated
+   - Excel report generated with side-by-side layout
    - Browser closes automatically
+   - Success message displays and auto-clears after 10 seconds
 
 4. **View Results**
    - Screenshots saved in `screenshots/` folder
@@ -103,24 +114,37 @@ screenshots/
 ```
 
 ### Excel Report Structure
+
+**Single Test Mode (Append unchecked):**
 ```
 reports/
 └── test-name_2025-10-29T08-14-46-361Z.xlsx
-    ├── API Test Details (sheet)
-    │   ├── API URL
-    │   ├── HTTP Method
-    │   ├── Request/Response Headers
-    │   └── Request/Response Data
-    └── Screenshots (sheet)
-        ├── Full Page Screenshot
-        ├── Request Fields - Group 1
-        └── Response Fields - Group 1
+    └── API Test Details (single sheet)
+        ├── API URL
+        ├── HTTP Method
+        ├── Request/Response Headers
+        ├── Request/Response Data
+        └── Screenshots (Side-by-Side)
+            ├── 📤 REQUEST DETAILS (Column A)
+            └── 📥 RESPONSE DETAILS (Column B)
+```
+
+**Multi-Test Mode (Append checked):**
+```
+reports/
+└── test-name.xlsx (no timestamp)
+    ├── Login_Test (tab)
+    │   └── [API details + side-by-side screenshots]
+    ├── Get_Users (tab)
+    │   └── [API details + side-by-side screenshots]
+    └── Create_Order (tab)
+        └── [API details + side-by-side screenshots]
 ```
 
 ## 🎯 Advanced Features
 
 ### Smart Field Grouping
-- Fields within 100px are automatically grouped into single screenshots
+- Fields within 200px are automatically grouped into single screenshots
 - Reduces number of screenshots while maintaining clarity
 - Shows surrounding context for better understanding
 
@@ -133,6 +157,25 @@ reports/
 ### Fallback Screenshots
 - If no fields are highlighted (field names don't match), captures full section
 - Ensures you always get screenshots even if field names are incorrect
+
+### Side-by-Side Screenshot Layout
+- Request screenshots displayed in left column (📤 REQUEST DETAILS)
+- Response screenshots displayed in right column (📥 RESPONSE DETAILS)
+- Both screenshots aligned at the same row for easy comparison
+- Images scaled to 40% for optimal Excel display
+- Color-coded headers: Orange for requests, Green for responses
+
+### Multi-Test Case Management
+- **Append Mode OFF**: Creates new Excel file with timestamp for each test
+- **Append Mode ON**: Adds new tab to existing Excel file
+- Each tab named by test case (e.g., `Login_Scenario`, `Get_User_Data`)
+- Automatic tab name conflict resolution (adds counter if duplicate)
+- Perfect for organizing regression test results
+
+### Auto-Clear UI Messages
+- Success messages automatically disappear after 10 seconds
+- Error messages clear when you click "Execute Test" again
+- Keeps UI clean and uncluttered
 
 ## 🛠️ Configuration
 
@@ -167,6 +210,17 @@ The tool uses Puppeteer with the following settings:
 4. **For Large Responses**
    - Only highlight important fields (3-5 recommended)
    - Too many fields create multiple screenshots
+
+5. **Using Append Mode Effectively**
+   - Use the same "Report File Name" for related tests
+   - Give each test case a descriptive name (e.g., `Login_Success`, `Login_Invalid`)
+   - Perfect for organizing test suites in one Excel file
+   - Each tab will show side-by-side request/response comparison
+
+6. **Test Case Naming Convention**
+   - Use underscores instead of spaces: `Create_User` not `Create User`
+   - Keep names short (max 31 characters - Excel limitation)
+   - Be descriptive: `API_Get_Users_200` better than `Test1`
 
 ## 🔧 Troubleshooting
 
@@ -209,7 +263,28 @@ POST http://localhost:3000/api/test
     "request": ["username", "email"],
     "response": ["id", "status", "message"]
   },
-  "excelFileName": "user-creation-test"
+  "excelFileName": "user-creation-test",
+  "appendMode": false,
+  "testCaseName": ""
+}
+```
+
+**For Multi-Test Mode:**
+```javascript
+POST http://localhost:3000/api/test
+
+{
+  "apiUrl": "https://api.example.com/users",
+  "method": "GET",
+  "headers": { "Content-Type": "application/json" },
+  "body": null,
+  "fieldsToHighlight": {
+    "request": ["url", "method"],
+    "response": ["id", "name", "email"]
+  },
+  "excelFileName": "regression-tests",
+  "appendMode": true,
+  "testCaseName": "Get_All_Users"
 }
 ```
 
@@ -270,6 +345,30 @@ MIT License - Free to use and modify
 
 ---
 
-**Version:** 1.0.0  
-**Last Updated:** October 29, 2025  
+## 🆕 What's New in Version 2.0.0
+
+### Side-by-Side Screenshot Layout
+- Request and response screenshots now displayed adjacently in Excel
+- No more separate "Screenshots" tab - everything in one view
+- Color-coded headers for easy identification
+
+### Multi-Test Case Support
+- Append mode allows multiple test cases in one Excel file
+- Each test case gets its own named tab
+- Perfect for organizing regression test suites
+
+### Enhanced UI Experience
+- Auto-clear success messages after 10 seconds
+- Messages clear automatically when starting a new test
+- Cleaner, more professional interface
+
+### Improved Excel Reports
+- Single consolidated worksheet per test
+- Side-by-side layout for easy comparison
+- Optimized image scaling (40%) for better Excel performance
+
+---
+
+**Version:** 2.0.0  
+**Last Updated:** October 30, 2025  
 **Author:** Chandan Varshney

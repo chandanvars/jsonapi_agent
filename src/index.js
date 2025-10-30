@@ -26,7 +26,9 @@ app.post('/api/test', async (req, res) => {
                 request: [],
                 response: []
             },
-            excelFileName = 'api-test-results'
+            excelFileName = 'api-test-results',
+            appendMode = false,
+            testCaseName = ''
         } = req.body;
 
         if (!apiUrl) {
@@ -36,7 +38,19 @@ app.post('/api/test', async (req, res) => {
             });
         }
 
+        // Validate test case name when append mode is enabled
+        if (appendMode && !testCaseName.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'Test case name is required when append mode is enabled'
+            });
+        }
+
         console.log(chalk.blue('� Starting API test with field highlighting...'));
+
+        if (appendMode) {
+            console.log(chalk.cyan(`📑 Append mode enabled - Test case: ${testCaseName}`));
+        }
 
         const result = await agent.executeAPITest({
             apiUrl,
@@ -44,7 +58,9 @@ app.post('/api/test', async (req, res) => {
             headers,
             body,
             fieldsToHighlight,
-            excelFileName
+            excelFileName,
+            appendMode,
+            testCaseName
         });
 
         // Clean up browser after test completes
